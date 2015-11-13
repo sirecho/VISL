@@ -20,7 +20,7 @@ public class Page {
      * 
      * TODO: Implement this feature.
      */    
-    Element getPortion(int x1, int y1, int x2, int y2) {
+    public Element getPortion(int x1, int y1, int x2, int y2) {
         return null;
     }
     
@@ -33,7 +33,16 @@ public class Page {
      * 
      * TODO: Implement this feature.
      */    
-    Element getElement(String path) {
+    public Element getElement(String path) {
+        return new Element();
+    }
+    
+    /**
+     * Get the entire page as an Element.
+     * 
+     * @return      The entire page as an element.
+     */
+    public Element getPage() {
         return new Element();
     }
     
@@ -49,7 +58,7 @@ public class Page {
      * 
      * TODO: Implement this feature.
      */    
-    boolean hasTextAligned(Collection<Element> elements, Alignment alignment) {
+    public boolean hasTextAligned(Collection<Element> elements, Alignment alignment) {
         return false;
     }
 }

@@ -18,8 +18,8 @@ public class Element {
      * 
      * @return      True if the element contains the image, false otherwise.
      */
-    boolean hasImage(Image reference) {
-        return false;
+    public boolean hasImage(Image reference) {
+        return true;
     }
     
     /**
@@ -33,7 +33,7 @@ public class Element {
      * @return      True if the element contains the image with the correct 
      *              resolution, false otherwise.
      */    
-    boolean hasImage(Image reference, int sizeX, int sizeY) {
+    public boolean hasImage(Image reference, int sizeX, int sizeY) {
         return false;
     }
     
@@ -44,7 +44,7 @@ public class Element {
      * 
      * @return      True if the element contains the string, false otherwise.
      */
-    boolean hasText(String text) {
+    public boolean hasText(String text) {
         return false;
     }    
     
@@ -57,7 +57,7 @@ public class Element {
      * @return      True if the text in the element exactly matches the string, 
      *              false otherwise.
      */
-    boolean hasExactText(String text) {
+    public boolean hasExactText(String text) {
         return false;
     }
     
@@ -68,7 +68,7 @@ public class Element {
      * 
      * @return      True if the text has the given color, false otherwise.
      */
-    boolean hasTextColor(Color color) {
+    public boolean hasTextColor(Color color) {
         return false;
     }
     
@@ -79,7 +79,7 @@ public class Element {
      * 
      * @return      True if the text has the given font size, false otherwise.
      */    
-    boolean hasFontSize(int fontSize) {
+    public boolean hasFontSize(int fontSize) {
         return false;
     }
     
@@ -91,7 +91,7 @@ public class Element {
      * 
      * @return      True if the text is correctly aligned, false otherwise.
      */
-    boolean hasTextAligned(String alignmentType) {
+    public boolean hasTextAligned(String alignmentType) {
         return false;
     }    
 }
