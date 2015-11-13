@@ -1,4 +1,5 @@
 package com.tests;
+import com.visl.Image;
 import cucumber.api.PendingException;
 import cucumber.api.java8.En;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -11,7 +12,8 @@ public class StepDefinitions implements En {
     public StepDefinitions() {
         Given("^I am at the photo album page$", () -> {
             // TODO: Write code to navigate to the page
-            FirefoxDriver driver = new FirefoxDriver();
+            //FirefoxDriver driver = new FirefoxDriver();
+            assertTrue(true);
         });
 
         When("^I click my first photo$", () -> {
@@ -20,7 +22,7 @@ public class StepDefinitions implements En {
 
         Then("^I should see my first photo$", () -> {
             Page myPage = new Page();
-            assertTrue(false);
+            assertTrue(myPage.getPage().hasImage(new Image()));
         });
     }
 }
