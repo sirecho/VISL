@@ -1,5 +1,8 @@
 # VISL
 
+To run VISL you must have Firefox and Xvfb (X virtual framebuffer) installed on your system.
+
+
 The "tests" project requires that the "VISL" project is built and installed to maven:
 - go into the VISL directory and run 'mvn install'
 
