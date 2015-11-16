@@ -34,7 +34,7 @@ public class Page {
      * TODO: Implement this feature.
      */    
     public Element getElement(String path) {
-        return new Element();
+        return new Element(path);
     }
     
     /**
@@ -43,7 +43,7 @@ public class Page {
      * @return      The entire page as an element.
      */
     public Element getPage() {
-        return new Element();
+        return new Element("null");
     }
     
 

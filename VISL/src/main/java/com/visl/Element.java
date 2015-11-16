@@ -1,6 +1,8 @@
 package com.visl;
 
+import com.visl.tools.ImageTools;
 import java.awt.Color;
+import java.io.FileNotFoundException;
 
 /** Represents an element on a web page. 
  * An element can correspond to an actual DOM element on the web page,
@@ -8,7 +10,36 @@ import java.awt.Color;
  */
 public class Element {
     
+    private String XPath;
+    private String CSSPath;
+    private String imagePath;
+    
+    private int x, y, width, height;
+    
     public enum Alignment {LEFT, RIGHT, CENTER, JUSTIFIED};
+    
+    public Element(String XPath) {
+        this.XPath = XPath;
+    }
+    
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
+    }
+    
+    /**
+     * Define the position and size of the element.
+     * 
+     * @param x Top-left x-coordinate
+     * @param y Top-left y-coordinate
+     * @param width Element width
+     * @param height Element height
+     */
+    public void setPositionAndSize(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
     
     /**
      * Check if the element contains an image corresponding to the given 
@@ -18,8 +49,16 @@ public class Element {
      * 
      * @return      True if the element contains the image, false otherwise.
      */
-    public boolean hasImage(Image reference) {
-        return true;
+    public boolean hasImage(String imagePath) {
+        
+        float similarity = 0F;
+        try {
+            similarity = ImageTools.compareImages(this.imagePath, imagePath);
+        } catch (FileNotFoundException e) {
+            System.out.println(e.getLocalizedMessage());
+        }
+        
+        return similarity == 0;
     }
     
     /**
