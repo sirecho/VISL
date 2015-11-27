@@ -1,6 +1,7 @@
 package com.visl;
 
 import com.visl.tools.ImageTools;
+import com.visl.tools.TextTools;
 import java.awt.Color;
 import java.io.FileNotFoundException;
 
@@ -15,6 +16,14 @@ public class Element {
     private String imagePath;
     
     private int x, y, width, height;
+
+    public Element() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    boolean hasSubImage(String referenceImg) {
+        return ImageTools.hasSubImage(this.imagePath, referenceImg);
+    }
     
     public enum Alignment {LEFT, RIGHT, CENTER, JUSTIFIED};
     
@@ -84,7 +93,8 @@ public class Element {
      * @return      True if the element contains the string, false otherwise.
      */
     public boolean hasText(String text) {
-        return false;
+        String imageText = TextTools.getTextFromImage(this.imagePath);
+        return imageText.regionMatches(0, text, 0, text.length());
     }    
     
     
@@ -97,7 +107,7 @@ public class Element {
      *              false otherwise.
      */
     public boolean hasExactText(String text) {
-        return false;
+        return text.equals(TextTools.getTextFromImage(this.imagePath));
     }
     
     /**

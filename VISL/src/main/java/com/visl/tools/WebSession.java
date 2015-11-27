@@ -85,6 +85,44 @@ public class WebSession {
         return el;
     }
     
+    public Element getElement(String XPath, int width, int height) throws NoSuchElementException {
+        // Look for the element
+        WebElement element = (WebElement) driver.findElement(By.xpath(XPath));
+        
+        /*
+        * Get the position and size of the element.
+        * This is currently done by getting the element's BoundingClientRect,
+        * as Selenium's getLocation() function does not return correct values.
+        */
+        int x = (int) Math.round(Double.parseDouble(((JavascriptExecutor)driver).executeScript("return arguments[0].getBoundingClientRect()[\"x\"]", element).toString()));
+        int y = (int) Math.round(Double.parseDouble(((JavascriptExecutor)driver).executeScript("return arguments[0].getBoundingClientRect()[\"y\"]", element).toString()));
+        
+        System.out.println("DEBUG: Found object at "+x+","+y+" "+width+"x"+height);
+        
+        Element el = new Element(XPath);
+        el.setPositionAndSize(x, y, width, height);
+        
+        String croppedFilename = "/tmp/"+element.getTagName()+"_"+Long.toString(System.currentTimeMillis() / 1000L)+".png";
+        el.setImagePath(croppedFilename);
+        ImageTools.cropImage(SCREENSHOT_FILENAME, croppedFilename, x, y, width, height);
+        
+        return el;
+    }
+    
+    public Element getElement(int x, int y, int width, int height) throws NoSuchElementException {
+        
+        String name = x+"_"+y+"_"+width+"_"+height;
+        
+        Element el = new Element();
+        el.setPositionAndSize(x, y, width, height);
+        
+        String croppedFilename = "/tmp/"+name+"_"+Long.toString(System.currentTimeMillis() / 1000L)+".png";
+        el.setImagePath(croppedFilename);
+        ImageTools.cropImage(SCREENSHOT_FILENAME, croppedFilename, x, y, width, height);
+        
+        return el;
+    }
+    
     public void close() {
         driver.close();
         p.destroy();        

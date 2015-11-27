@@ -10,7 +10,10 @@ import static org.bytedeco.javacpp.opencv_imgcodecs.imread;
 import static org.bytedeco.javacpp.opencv_imgproc.resize;
 import static org.bytedeco.javacpp.opencv_core.Rect;
 import java.io.IOException;
+import org.bytedeco.javacpp.DoublePointer;
+import org.bytedeco.javacpp.opencv_core;
 import org.bytedeco.javacpp.opencv_imgcodecs;
+import org.bytedeco.javacpp.opencv_imgproc;
 
 
 public class ImageTools {
@@ -88,6 +91,40 @@ public class ImageTools {
 		System.out.println("Similarity Score: "+(100 - similarityScore));
 		return similarityScore;
 	}
+        
+        public static boolean hasSubImage(String source, String template) {
+            int match_method = opencv_imgproc.CV_TM_CCORR_NORMED;
+            
+            Mat img = imread(source, 1);
+            Mat templ = imread(template, 1);
+            Mat result = new Mat();
+            int result_cols =  img.cols() - templ.cols() + 1;
+            int result_rows = img.rows() - templ.rows() + 1;
+            
+            result.create( result_rows, result_cols, opencv_core.CV_32FC1 );
+            
+            opencv_imgproc.matchTemplate( img, templ, result, match_method );
+            //opencv_core.normalize( result, result, 0, 1, opencv_core.NORM_MINMAX, -1, new Mat() );
+            
+            opencv_core.Point minLoc = null;
+            opencv_core.Point maxLoc = null;
+            opencv_core.Point matchLoc;
+            
+            DoublePointer minVal = new DoublePointer(2);
+            DoublePointer maxVal = new DoublePointer(2);
+
+            opencv_core.minMaxLoc( result, minVal, maxVal, minLoc, maxLoc, new Mat() );
+            
+            /// For SQDIFF and SQDIFF_NORMED, the best matches are lower values. For all the other methods, the higher the better
+            if( match_method  == opencv_imgproc.CV_TM_SQDIFF || match_method == opencv_imgproc.CV_TM_SQDIFF_NORMED )
+              { matchLoc = minLoc; }
+            else
+              { matchLoc = maxLoc; }
+            
+            System.out.println("MINVAL: "+minVal.get(0));
+            System.out.println("MAXVAL: "+maxVal.get(0));
+            return maxVal.get(0) == 1.0;
+        }
         
         public static boolean cropImage(String inPath, String outPath, int x, int y, int w, int h) {
             Mat image = imread(inPath);
