@@ -4,6 +4,7 @@ import com.visl.tools.ImageTools;
 import com.visl.tools.TextTools;
 import com.visl.tools.Word;
 import java.awt.Color;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -24,10 +25,6 @@ public class Element {
 
     public Element() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    boolean hasSubImage(String referenceImg) {
-        return ImageTools.hasSubImage(this.imagePath, referenceImg, false);
     }
     
     public Element(String XPath) {
@@ -61,19 +58,22 @@ public class Element {
      * 
      * @return      True if the element contains the image, false otherwise.
      */
-    public boolean hasImage(String imagePath) {
+    public boolean hasExactImage(String imagePath) {
+        return hasImage(imagePath, true);
+    }
+    
+    public boolean containsImage(String imagePath) {
+        return hasImage(imagePath, false);
+    }
+    
+    private boolean hasImage(String imagePath, boolean exact) {
         try {
             log.log(Level.INFO, "Comparing images");
-            
-            if (!ImageTools.getImageColors(imagePath).equals(ImageTools.getImageColors(this.imagePath))) {
-                log.log(Level.WARNING, "Images have different colors");
-                return false;
-            }
-            return ImageTools.hasSubImage(this.imagePath, imagePath, true);
+            return ImageTools.hasSubImage(this.imagePath, imagePath, exact);
         } catch (FileNotFoundException ex) {
             Logger.getLogger(Element.class.getName()).log(Level.SEVERE, null, ex);
             return false;
-        }
+        }        
     }
     
     /**
@@ -175,5 +175,5 @@ public class Element {
         // For each line: store left value of first word, right of last
         
         return false;
-    }    
+    }
 }

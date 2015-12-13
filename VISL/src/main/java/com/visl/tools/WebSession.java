@@ -56,7 +56,9 @@ public class WebSession {
     
     private void takeScreenshot() throws IOException {
         File scrFile = ( (TakesScreenshot) driver ).getScreenshotAs(OutputType.FILE);
-        FileUtils.copyFile(scrFile, new File(SCREENSHOT_FILENAME));
+        File outputFile = new File(SCREENSHOT_FILENAME);
+        FileUtils.copyFile(scrFile, outputFile);
+        outputFile.deleteOnExit();
     }
     
     /**
@@ -67,39 +69,12 @@ public class WebSession {
      * @throws NoSuchElementException if the element cannot be found.
      */
     public Element getElement(String XPath) {
-        log.log(Level.INFO, "Looking for element {0}", XPath);
-        
-        // Look for the element
-        WebElement element;
-        try {
-            element = (WebElement) driver.findElement(By.xpath(XPath));
-        } catch (InvalidSelectorException ex) {
-            log.log(Level.WARNING, "The selector is invalid: {0}", XPath);
-            throw new NoSuchElementException("The selector is invalid: "+XPath);
-        }
-        
-        /*
-        * Get the position and size of the element.
-        * This is currently done by getting the element's BoundingClientRect,
-        * as Selenium's getLocation() function does not return correct values.
-        */
-        int x = (int) Math.round(Double.parseDouble(((JavascriptExecutor)driver).executeScript("return arguments[0].getBoundingClientRect()[\"x\"]", element).toString()));
-        int y = (int) Math.round(Double.parseDouble(((JavascriptExecutor)driver).executeScript("return arguments[0].getBoundingClientRect()[\"y\"]", element).toString()));
-        int width = (int) Math.round(Double.parseDouble(((JavascriptExecutor)driver).executeScript("return arguments[0].getBoundingClientRect()[\"width\"]", element).toString()));
-        int height = (int) Math.round(Double.parseDouble(((JavascriptExecutor)driver).executeScript("return arguments[0].getBoundingClientRect()[\"height\"]", element).toString()));
-        
-        log.log(Level.INFO, "Found element at {0},{1} {2}x{3}", new Object[]{x, y, width, height});
-        
-        Element el = new Element(XPath);
-        el.setPositionAndSize(x, y, width, height);
-        
-        String croppedFilename = "/tmp/"+element.getTagName()+"_"+Long.toString(System.currentTimeMillis() / 1000L)+".png";
-        el.setImagePath(croppedFilename);
-        ImageTools.cropImage(SCREENSHOT_FILENAME, croppedFilename, x, y, width, height);
-        return el;
+        return getElement(XPath, 0, 0);
     }
     
     public Element getElement(String XPath, int width, int height) {
+        log.log(Level.INFO, "Looking for element {0}", XPath);
+        
         // Look for the element
         WebElement element = (WebElement) driver.findElement(By.xpath(XPath));
         
@@ -111,22 +86,22 @@ public class WebSession {
         int x = (int) Math.round(Double.parseDouble(((JavascriptExecutor)driver).executeScript("return arguments[0].getBoundingClientRect()[\"x\"]", element).toString()));
         int y = (int) Math.round(Double.parseDouble(((JavascriptExecutor)driver).executeScript("return arguments[0].getBoundingClientRect()[\"y\"]", element).toString()));
         
-        System.out.println("DEBUG: Found object at "+x+","+y+" "+width+"x"+height);
+        if (width == 0 && height == 0) {
+            width = (int) Math.round(Double.parseDouble(((JavascriptExecutor)driver).executeScript("return arguments[0].getBoundingClientRect()[\"width\"]", element).toString()));
+            height = (int) Math.round(Double.parseDouble(((JavascriptExecutor)driver).executeScript("return arguments[0].getBoundingClientRect()[\"height\"]", element).toString()));
+        }
+        
+        log.log(Level.INFO, "Found element at {0},{1} {2}x{3}", new Object[]{x, y, width, height});
         
         Element el = new Element(XPath);
         el.setPositionAndSize(x, y, width, height);
         
         String croppedFilename = "/tmp/"+element.getTagName()+"_"+Long.toString(System.currentTimeMillis() / 1000L)+".png";
         el.setImagePath(croppedFilename);
-        try {
-            ImageTools.cropImage(SCREENSHOT_FILENAME, croppedFilename, x, y, width, height);
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(WebSession.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InvalidDimensionsException ex) {
-            Logger.getLogger(WebSession.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        return el;
+        ImageTools.cropImage(SCREENSHOT_FILENAME, croppedFilename, x, y, width, height);
+        File croppedFile = new File(croppedFilename);
+        croppedFile.deleteOnExit();
+        return el;        
     }
     
     public Element getElement(int x, int y, int width, int height) throws NoSuchElementException, FileNotFoundException, InvalidDimensionsException {

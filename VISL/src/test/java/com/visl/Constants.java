@@ -28,7 +28,7 @@ public class Constants {
     public static final String OWL_LARGE_JPG = "owl_large.jpg";
     public static final String FACE_JPG = "face.jpg";
     public static final String SEAROCKS_LARGE_JPG = "searocks_large.jpg";
-    public static final String SEAROCKS_GREYSCALE_PNG = "searocks_greyscale.png";
+    public static final String SEAROCKS_GRAYSCALE_PNG = "searocks_grayscale.png";
     public static final String SEAROCKS_BRIGHT_PNG = "searocks_bright.jpg";
     public static final String SEAROCKS_CROPPED_PNG = "searocks_cropped.jpg";
     public static final String SEAROCKS_SCALED_PNG = "searocks_scaled.jpg";

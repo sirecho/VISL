@@ -18,167 +18,218 @@ import static org.junit.Assert.*;
 import org.junit.Ignore;
 import com.visl.Constants;
 import com.visl.exceptions.InvalidDimensionsException;
+import java.io.FileNotFoundException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import org.opencv.core.Core;
 import org.openqa.selenium.NoSuchElementException;
 
+/**
+ * This class contains tests based on the specifications of the visual invariants.
+ */
 public class TestImageInvariants {
 
     private static String projectDir;
     private static String webDir;
     private static String imgDir;
+    private static String searocksImg;
+    private static String searocksXPath;
     
-    private WebSession session;
+    private static WebSession session;
     private static Logger log;
-        
+    
     @BeforeClass
-    public static void setUpClass() {
+    public static void setUpClass() throws IOException {
+        // Load the OpenCV library
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+        
         projectDir = System.getProperty("user.dir");
         webDir = projectDir+"/"+Constants.WEB_DIR;
         imgDir = projectDir+"/"+Constants.IMAGES_DIR;
-
-
+        
+        searocksImg = webDir+TestPage.SEAROCKS_PNG;
+        searocksXPath = TestPage.SEAROCKS_XPATH;
         
         log = Logger.getLogger(TestImageInvariants.class.getName());
         
-        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+        log.log(Level.INFO, "Setting up a new session");
+        session = new WebSession(TestPage.URL);
     }
     
     @AfterClass
     public static void tearDownClass() {
+        session.close();
     }
-    
     
     @Before
     public void setUp() {
-        log.log(Level.INFO, "Setting up a new session");
-        try {      
-            session = new WebSession(TestPage.URL);
-        } catch (IOException ex) {
-            Logger.getLogger(TestImageInvariants.class.getName()).log(Level.SEVERE, null, ex);
-        }
+
     }
     
     @After
     public void tearDown() {
-        session.close();
+        
     }
     
-    @Ignore
+    /**
+     * Test with matching image.
+     */
     @Test
-    public void testHasImage() {
-         
-        // 1. test with matching image
+    public void matching() { 
         System.out.println("Testing with matching image");
-        String searocksImg = webDir+TestPage.SEAROCKS_PNG;
-        String searocksXPath = TestPage.SEAROCKS_XPATH;
         Element element = session.getElement(searocksXPath);
-        assertTrue(element.hasImage(searocksImg));
-        
-        // 2. test with non-matching image that is smaller than reference
+        assertTrue(element.hasExactImage(searocksImg));
+    }
+    
+    /**
+     * Test with non-matching image that is smaller than reference.
+     */
+    @Test
+    public void nonmatching_smaller() {
         System.out.println("Testing with smaller non-matching image");
+        Element element = session.getElement(searocksXPath);
         String smallerNonMatchImg = imgDir+Constants.FACE_JPG;
-        assertFalse(element.hasImage(smallerNonMatchImg));
-        
-        // 3. test with non-matching image that is larger than reference
+        assertFalse(element.hasExactImage(smallerNonMatchImg));
+    }
+    
+    /**
+     * Test with non-matching image that is larger than reference. 
+     */
+    @Test
+    public void nonmatching_larger() {
         System.out.println("Testing with larger non-matching image");
+        Element element = session.getElement(searocksXPath);
         String largerNonMatchImg = imgDir+Constants.SEAROCKS_LARGE_JPG;
-        assertFalse(element.hasImage(largerNonMatchImg));
-        
-        // 4. test with wrong image path
+        assertFalse(element.hasExactImage(largerNonMatchImg));
+    }
+    
+    /**
+     * Test with wrong image path. 
+     */
+    @Test
+    public void wrongFilepath() {
         System.out.println("Testing with wrong image path");
-        assertFalse(element.hasImage("/dev/null"));
-        
-        // 5. test with invalid xpath
+        Element element = session.getElement(searocksXPath);
+        assertFalse(element.hasExactImage("/dev/null"));
+    }
+    
+    /**
+     * Test with invalid XPath.
+     */
+    @Test(expected = NoSuchElementException.class)
+    public void invalidXPath() {
         System.out.println("Testing with invalid XPath");
-        boolean caughtException = false;
-        try {
-            session.getElement("asdjn23823!\\)");
-        } catch (NoSuchElementException ex) {
-            caughtException = true;
-        }
-        assertTrue("Invalid XPath did not throw exception!", caughtException);
-        
-        // 6. test with wrong xpath
+        session.getElement("asdjn23823!\\)");
+    }
+    
+    /**
+     * Test with wrong XPath.
+     */
+    @Test(expected = NoSuchElementException.class)
+    public void wrongXPath() {
         System.out.println("Testing with wrong XPath");
-        caughtException = false;
-        try {
-            session.getElement("//body/font/li/null");
-        } catch (NoSuchElementException ex) {
-            caughtException = true;
-        }
-        assertTrue("Invalid XPath did not throw exception!", caughtException);
-        
-        // 7. test with matching image, but reference image is grayscale
+        session.getElement("//body/font/li/null");
+    }
+    
+    /**
+     * Test with matching image, but reference image is grayscale.
+     */
+    @Test
+    public void grayscale() {
         System.out.println("Testing with matching greyscale image");
-        String searocksGreyImg = imgDir+Constants.SEAROCKS_GREYSCALE_PNG;
-        assertFalse(element.hasImage(searocksGreyImg));
-        
-        // 8. test with matching image, but reference image is brighter
+        Element element = session.getElement(searocksXPath);
+        String searocksGreyImg = imgDir+Constants.SEAROCKS_GRAYSCALE_PNG;
+        assertFalse(element.hasExactImage(searocksGreyImg));   
+    }
+    
+    /**
+     * Test with matching image, but reference image is brighter.
+     */
+    @Test
+    public void brighter() {
         System.out.println("Testing with matching brighter image");
+        Element element = session.getElement(searocksXPath);
         String searocksBrightImg = imgDir+Constants.SEAROCKS_BRIGHT_PNG;
-        assertFalse(element.hasImage(searocksBrightImg));
-        
-        // 9. test with matching image, but reference image is cropped
+        assertFalse(element.hasExactImage(searocksBrightImg));
+    }
+    
+    /**
+     * Test with matching image, but reference image is cropped.
+     */
+    @Test
+    public void cropped() {
         System.out.println("Testing with matching cropped image");
+        Element element = session.getElement(searocksXPath);
         String searocksCroppedImg = imgDir+Constants.SEAROCKS_CROPPED_PNG;
-        assertFalse(element.hasImage(searocksCroppedImg));
-        
-        // 10. test with matching image, but reference image is resized
-        System.out.println("Testing with matching cropped image");
+        assertFalse(element.hasExactImage(searocksCroppedImg));
+    }
+    
+    /**
+     * Test with matching image, but reference image is resized.
+     */
+    @Test
+    public void scaled() {
+        System.out.println("Testing with matching scaled image");
+        Element element = session.getElement(searocksXPath);
         String searocksScaledImg = imgDir+Constants.SEAROCKS_SCALED_PNG;
-        assertFalse(element.hasImage(searocksScaledImg));
+        assertFalse(element.hasExactImage(searocksScaledImg));
     }
     
     
+    /**
+     * Test with matching image and correct size.
+     */
     @Test
-    public void testHasImageSize() {
-        
-        // 1. test with matching image and correct size
-        System.out.println("Testing with matching image");
+    public void size_correct() {
+        System.out.println("Testing hasImage with specific size and matching image");
         String searocksImg = webDir+TestPage.SEAROCKS_PNG;
         String searocksXPath = TestPage.SEAROCKS_XPATH;
         Element element = session.getElement(searocksXPath, 300, 200);
-        assertTrue(element.hasImage(searocksImg));
-        
-        // 2. test with matching image and smaller size
-        System.out.println("Testing with matching image and smaller size");
-        element = session.getElement(searocksXPath, 30, 20);
-        assertFalse(element.hasImage(searocksImg));
-        
-        // 3. test with matching image and larger size
-        System.out.println("Testing with matching image and larger size");
-        element = session.getElement(searocksXPath, 600, 400);
-        assertFalse(element.hasImage(searocksImg));
-        
-        // 4. test with matching image and out-of-bounds size
-        System.out.println("Testing with matching image and out-of-bounds size");
-        boolean caughtException = false;
-        try {
-            session.getElement(searocksXPath, 30000, 20000);
-        } catch (InvalidDimensionsException ex) {
-            caughtException = true;
-        }
-        assertTrue("Invalid dimensions did not throw exception!", caughtException);
-        
-        // 5. test with matching image and negative size
-        System.out.println("Testing with matching image and negative size");
-        try {
-            session.getElement(searocksXPath, -3, -2);
-        } catch (InvalidDimensionsException ex) {
-            caughtException = true;
-        }
-        assertTrue("Invalid dimensions did not throw exception!", caughtException);
+        assertTrue(element.hasExactImage(searocksImg));
     }
     
-    @Ignore
+    /**
+     * Test with matching image and smaller size.
+     */
     @Test
-    public void testHasSubImage() {
-        String referenceImg = "/home/echo/NetBeansProjects/VISL/src/test/resources/org/visl/google_logo.png";
-        String elementXPath = "/html/body/div/div[5]/span/center/div[1]/img";
-        
-        Element element = session.getElement(elementXPath, 500, 500);
-        assertTrue(element.hasSubImage(referenceImg));
+    public void size_smaller() {
+        System.out.println("Testing with matching image and smaller size");
+        Element element = session.getElement(searocksXPath, 30, 20);
+        assertFalse(element.hasExactImage(searocksImg));        
+    }
+    
+    /**
+     * Test with matching image and larger size.
+     */
+    @Test
+    public void size_larger() {
+        System.out.println("Testing with matching image and larger size");
+        Element element = session.getElement(searocksXPath, 600, 400);
+        assertFalse(element.hasExactImage(searocksImg));        
+    }
+    
+    /**
+     * Test with matching image and out-of-bounds size.
+     */
+    @Test(expected = InvalidDimensionsException.class)
+    public void size_overflow() {
+        System.out.println("Testing with matching image and out-of-bounds size");
+        session.getElement(searocksXPath, 30000, 20000);     
+    }
+    
+    /**
+     * Test with matching image and negative size.
+     */
+    @Test(expected = InvalidDimensionsException.class)
+    public void size_negative() {
+        System.out.println("Testing with matching image and negative size");
+        session.getElement(searocksXPath, -3, -2);    
+    }
+    
+    @Test
+    public void subImage_matching() {
+        System.out.println("Testing hasSubImage with matching image");
+        Element element = session.getElement(TestPage.CONTENT_XPATH);
+        assertTrue(element.containsImage(searocksImg));
     }
 }

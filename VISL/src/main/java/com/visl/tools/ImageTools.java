@@ -150,19 +150,22 @@ public class ImageTools {
             System.out.println("MINLOC: "+mmRes.minLoc.toString());
             
             if (exact) {
-                return mmRes.maxVal == 1.0 && mmRes.maxLoc.x == 0.0 && mmRes.maxLoc.y == 0.0;
+                return mmRes.maxVal == 1.0 && mmRes.maxLoc.x == 0.0 && 
+                       mmRes.maxLoc.y == 0.0 && getImageColors(img).equals(getImageColors(templ));
             } else {
-                return mmRes.maxVal == 1.0;
+                Mat submat = img.submat(new Rect((int) mmRes.maxLoc.x, (int) mmRes.maxLoc.y, templ.width(), templ.height()));
+                return mmRes.maxVal == 1.0 && getImageColors(submat).equals(getImageColors(templ));
             }
         }
         
-        public static boolean cropImage(String inPath, String outPath, int x, int y, int w, int h) throws FileNotFoundException, InvalidDimensionsException {
-            verifyFile(inPath);
+        public static boolean cropImage(String inPath, String outPath, int x, int y, int w, int h) throws InvalidDimensionsException {            
             Mat image = Highgui.imread(inPath);
             
-            if (x+w > image.size().width || y+h > image.size().height || x+w < 0 || y+h < 0) {
+            if (x+w > image.size().width || y+h > image.size().height || 
+                x < 0 || y < 0 || w < 0 || h < 0 ) {
+                
                 throw new InvalidDimensionsException(
-                    "Cannot crop image because the given dimensions are out of bounds!\n"+
+                    "Cannot crop image because the given dimensions are invalid!\n"+
                     "Crop data:\n"+
                     "x:"+x+" y:"+y+" w:"+w+" h:"+h+"\n"+
                     "Original image size: "+image.size().width+"x"+image.size().height
@@ -176,11 +179,14 @@ public class ImageTools {
         
         public static ArrayList<Color> getImageColors(String imgPath) throws FileNotFoundException {
             verifyFile(imgPath);
-            
             log.log(Level.INFO, "Checking colors of {0}", imgPath);
+            Mat image = Highgui.imread(imgPath);
+            return getImageColors(image);
+        }        
+        
+        public static ArrayList<Color> getImageColors(Mat image) throws FileNotFoundException {
             HashMap<String, Integer> colorCount = new HashMap<>();
             
-            Mat image = Highgui.imread(imgPath);
             int highestValue = 0;
             String highestColor = "";
 
