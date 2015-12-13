@@ -2,8 +2,12 @@ package com.visl;
 
 import com.visl.tools.ImageTools;
 import com.visl.tools.TextTools;
+import com.visl.tools.Word;
 import java.awt.Color;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** Represents an element on a web page. 
  * An element can correspond to an actual DOM element on the web page,
@@ -11,8 +15,9 @@ import java.io.FileNotFoundException;
  */
 public class Element {
     
+    private static Logger log = Logger.getLogger(Element.class.getName());
+    
     private String XPath;
-    private String CSSPath;
     private String imagePath;
     
     private int x, y, width, height;
@@ -22,10 +27,8 @@ public class Element {
     }
 
     boolean hasSubImage(String referenceImg) {
-        return ImageTools.hasSubImage(this.imagePath, referenceImg);
+        return ImageTools.hasSubImage(this.imagePath, referenceImg, false);
     }
-    
-    public enum Alignment {LEFT, RIGHT, CENTER, JUSTIFIED};
     
     public Element(String XPath) {
         this.XPath = XPath;
@@ -54,20 +57,23 @@ public class Element {
      * Check if the element contains an image corresponding to the given 
      * reference image.
      * 
-     * @param reference The reference image.
+     * @param imagePath
      * 
      * @return      True if the element contains the image, false otherwise.
      */
     public boolean hasImage(String imagePath) {
-        
-        float similarity = 0F;
         try {
-            similarity = ImageTools.compareImages(this.imagePath, imagePath);
-        } catch (FileNotFoundException e) {
-            System.out.println(e.getLocalizedMessage());
+            log.log(Level.INFO, "Comparing images");
+            
+            if (!ImageTools.getImageColors(imagePath).equals(ImageTools.getImageColors(this.imagePath))) {
+                log.log(Level.WARNING, "Images have different colors");
+                return false;
+            }
+            return ImageTools.hasSubImage(this.imagePath, imagePath, true);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Element.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
         }
-        
-        return similarity == 0;
     }
     
     /**
@@ -82,7 +88,18 @@ public class Element {
      *              resolution, false otherwise.
      */    
     public boolean hasImage(Image reference, int sizeX, int sizeY) {
-        return false;
+        try {
+            log.log(Level.INFO, "Comparing images");
+            
+            if (!ImageTools.getImageColors(imagePath).equals(ImageTools.getImageColors(this.imagePath))) {
+                log.log(Level.WARNING, "Images have different colors");
+                return false;
+            }
+            return ImageTools.hasSubImage(this.imagePath, imagePath, true);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Element.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
     }
     
     /**
@@ -124,12 +141,24 @@ public class Element {
     /**
      * Check if the text in the element has the font size.
      * 
+     * Compares the given font size to the font size identified by
+     * Tesseract +/- 1px.
+     * 
      * @param fontSize The expected font size.
      * 
      * @return      True if the text has the given font size, false otherwise.
      */    
     public boolean hasFontSize(int fontSize) {
-        return false;
+        
+        for (ArrayList<Word> line : TextTools.getLines(imagePath)) {
+            for (Word word : line) {
+                if (word.getFontSize() < fontSize-1 || word.getFontSize() > fontSize+1) {
+                    return false;
+                }
+            }
+        }
+        
+        return true;
     }
     
     /**
@@ -141,6 +170,10 @@ public class Element {
      * @return      True if the text is correctly aligned, false otherwise.
      */
     public boolean hasTextAligned(String alignmentType) {
+        
+        // get lines
+        // For each line: store left value of first word, right of last
+        
         return false;
     }    
 }

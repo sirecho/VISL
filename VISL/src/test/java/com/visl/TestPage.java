@@ -10,11 +10,9 @@ package com.visl;
  * @author echo
  */
 public class TestPage {
-    public static final String URL = "http://url.to.webpage";
+    public static final String URL = "file:///home/echo/NetBeansProjects/VISL/src/test/resources/org/visl/www/index.html";
     
-    // IMAGE FILE PATHS
-    public static final String IMAGE_imgname1 = "/path/to/file.png";
-    
-    // ELEMENT XPATHS
-    public static final String XPATH_elementname1 = "//xpath/to/element";
+    // IMAGE FILE PATHS AND XPATHS
+    public static final String SEAROCKS_PNG = "searocks.png";
+    public static final String SEAROCKS_XPATH ="//*[@id=\"content\"]/center/img";
 }

@@ -1,28 +1,47 @@
 package com.visl.tools;
 
+
+import com.google.common.io.Files;
+import com.ochafik.lang.jnaerator.runtime.NativeSize;
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.PointerByReference;
+import com.visl.exceptions.InvalidDimensionsException;
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import static org.bytedeco.javacpp.opencv_core.countNonZero;
-import static org.bytedeco.javacpp.opencv_imgcodecs.CV_LOAD_IMAGE_GRAYSCALE;
-import static org.bytedeco.javacpp.opencv_core.Mat;
-import static org.bytedeco.javacpp.opencv_core.Size;
-import static org.bytedeco.javacpp.opencv_core.subtract;
-import static org.bytedeco.javacpp.opencv_imgcodecs.imread;
-import static org.bytedeco.javacpp.opencv_imgproc.resize;
-import static org.bytedeco.javacpp.opencv_core.Rect;
 import java.io.IOException;
-import org.bytedeco.javacpp.DoublePointer;
-import org.bytedeco.javacpp.opencv_core;
-import org.bytedeco.javacpp.opencv_imgcodecs;
-import org.bytedeco.javacpp.opencv_imgproc;
+import java.nio.ByteBuffer;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.imageio.ImageIO;
+import net.sourceforge.tess4j.ITessAPI;
+import net.sourceforge.tess4j.TessAPI;
+import net.sourceforge.tess4j.TessAPI1;
+import net.sourceforge.tess4j.util.ImageIOHelper;
+import org.opencv.core.Core;
+import org.opencv.core.CvException;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Size;
+import org.opencv.highgui.Highgui;
+import org.opencv.imgproc.Imgproc;
 
 
 public class ImageTools {
-	
-	public static void main(String[] args) throws IOException {
-		String pathFirst = "/Users/shivangibansal/Desktop/panda1.jpeg";
-		String pathSecond = "/Users/shivangibansal/Desktop/panda1.jpeg";
-		compareImages(pathFirst,pathSecond);
-	}
+    
+    private static Logger log = Logger.getLogger(ImageTools.class.getName());
 
 	/**
 	 * Takes 2 images and return a similarity score
@@ -31,13 +50,13 @@ public class ImageTools {
 	 * @return similarity percentage
 	 */
 	public static float compareImages(String pathFirst, String pathTwo) throws FileNotFoundException {
-		Mat first = imread(pathFirst, CV_LOAD_IMAGE_GRAYSCALE);
-                if (first.data() == null) {
+            Mat first = Highgui.imread(pathFirst, Highgui.CV_LOAD_IMAGE_COLOR);
+                if (first.empty()) {
                     throw new FileNotFoundException("Could not load image "+pathFirst);
                 }
                 
-    		Mat second = imread(pathTwo, CV_LOAD_IMAGE_GRAYSCALE);
-                if (second.data() == null) {
+    		Mat second = Highgui.imread(pathTwo, Highgui.CV_LOAD_IMAGE_COLOR);
+                if (second.empty()) {
                     throw new FileNotFoundException("Could not load image "+pathTwo);
                 }
 
@@ -52,24 +71,24 @@ public class ImageTools {
 		}
 		
 		// Resizing larger image to the size of smaller one for comparison purposes
-		Size sz = new Size(desCols, desRows);
+                Size sz = new Size(desCols, desRows);
 
 		Mat firstResized = new Mat();
 		Mat secondResized = new Mat();
 
-		resize(first, firstResized, sz);
-		resize(second, secondResized, sz);
+                Imgproc.resize(first, firstResized, sz);
+		Imgproc.resize(second, secondResized, sz);
 
 		Mat result1 = new Mat();
 		Mat result2 = new Mat();
 		float similarityScore;
 
 		// Obtain differences in image
-		subtract(firstResized, secondResized, result1);
-		subtract(secondResized,firstResized, result2);
+                Core.subtract(firstResized, secondResized, result1);
+		Core.subtract(secondResized,firstResized, result2);
 
 		// See how many pixels are different
-		int magnitudeOfDifference = Math.max(countNonZero(result1),countNonZero(result2));
+		int magnitudeOfDifference = Math.max(Core.countNonZero(result1),Core.countNonZero(result2));
 
 		// Total Pixels
 		int size = result1.rows() * result1.cols();
@@ -81,55 +100,140 @@ public class ImageTools {
 			similarityScore = (((float) magnitudeOfDifference / (float) size)) * 100;
 		}
 
-		first._deallocate();
-		second._deallocate();
-		firstResized._deallocate();
-		secondResized._deallocate();
-		result1._deallocate();
-		result2._deallocate();
-		sz.deallocate();
+                first.release();
+                second.release();
+		firstResized.release();
+		secondResized.release();
+		result1.release();
+		result2.release();
+                
 		System.out.println("Similarity Score: "+(100 - similarityScore));
 		return similarityScore;
 	}
         
-        public static boolean hasSubImage(String source, String template) {
-            int match_method = opencv_imgproc.CV_TM_CCORR_NORMED;
+        public static boolean hasSubImage(String source, String template, boolean exact) throws FileNotFoundException {
+            verifyFile(source);
+            verifyFile(template);
             
-            Mat img = imread(source, 1);
-            Mat templ = imread(template, 1);
+            int match_method = Imgproc.TM_CCORR_NORMED;
+            
+            Mat img = Highgui.imread(source, 1);
+            Mat templ = Highgui.imread(template, 1);
             Mat result = new Mat();
+            
+            if (templ.cols() > img.cols() || templ.rows() > img.rows()) {
+                log.log(Level.WARNING, "Template image is larger than the source!");
+                return false;
+            }
+            
             int result_cols =  img.cols() - templ.cols() + 1;
             int result_rows = img.rows() - templ.rows() + 1;
             
-            result.create( result_rows, result_cols, opencv_core.CV_32FC1 );
+            result.create( result_rows, result_cols, CvType.CV_32FC1);
             
-            opencv_imgproc.matchTemplate( img, templ, result, match_method );
-            //opencv_core.normalize( result, result, 0, 1, opencv_core.NORM_MINMAX, -1, new Mat() );
+            try {
+                Imgproc.matchTemplate( img, templ, result, match_method );
+                //opencv_core.normalize( result, result, 0, 1, opencv_core.NORM_MINMAX, -1, new Mat() );
+            } catch (CvException ex) {
+                Logger.getLogger(ImageTools.class.getName()).log(Level.SEVERE, "Template matching error!", ex);
+                return false;
+            }
             
-            opencv_core.Point minLoc = null;
-            opencv_core.Point maxLoc = null;
-            opencv_core.Point matchLoc;
             
-            DoublePointer minVal = new DoublePointer(2);
-            DoublePointer maxVal = new DoublePointer(2);
-
-            opencv_core.minMaxLoc( result, minVal, maxVal, minLoc, maxLoc, new Mat() );
             
-            /// For SQDIFF and SQDIFF_NORMED, the best matches are lower values. For all the other methods, the higher the better
-            if( match_method  == opencv_imgproc.CV_TM_SQDIFF || match_method == opencv_imgproc.CV_TM_SQDIFF_NORMED )
-              { matchLoc = minLoc; }
-            else
-              { matchLoc = maxLoc; }
+            Core.MinMaxLocResult mmRes = Core.minMaxLoc(result);
             
-            System.out.println("MINVAL: "+minVal.get(0));
-            System.out.println("MAXVAL: "+maxVal.get(0));
-            return maxVal.get(0) == 1.0;
+            
+            System.out.println("MINVAL: "+mmRes.minVal);
+            System.out.println("MAXVAL: "+mmRes.maxVal);
+            System.out.println("MAXLOC: "+mmRes.maxLoc.toString());
+            System.out.println("MINLOC: "+mmRes.minLoc.toString());
+            
+            if (exact) {
+                return mmRes.maxVal == 1.0 && mmRes.maxLoc.x == 0.0 && mmRes.maxLoc.y == 0.0;
+            } else {
+                return mmRes.maxVal == 1.0;
+            }
         }
         
-        public static boolean cropImage(String inPath, String outPath, int x, int y, int w, int h) {
-            Mat image = imread(inPath);
+        public static boolean cropImage(String inPath, String outPath, int x, int y, int w, int h) throws FileNotFoundException, InvalidDimensionsException {
+            verifyFile(inPath);
+            Mat image = Highgui.imread(inPath);
+            
+            if (x+w > image.size().width || y+h > image.size().height || x+w < 0 || y+h < 0) {
+                throw new InvalidDimensionsException(
+                    "Cannot crop image because the given dimensions are out of bounds!\n"+
+                    "Crop data:\n"+
+                    "x:"+x+" y:"+y+" w:"+w+" h:"+h+"\n"+
+                    "Original image size: "+image.size().width+"x"+image.size().height
+                );
+            }
+            
             Rect rect = new Rect(x, y, w, h);
             Mat cropped = new Mat(image, rect);
-            return opencv_imgcodecs.imwrite(outPath, cropped);
+            return Highgui.imwrite(outPath, cropped);
+        }
+        
+        public static ArrayList<Color> getImageColors(String imgPath) throws FileNotFoundException {
+            verifyFile(imgPath);
+            
+            log.log(Level.INFO, "Checking colors of {0}", imgPath);
+            HashMap<String, Integer> colorCount = new HashMap<>();
+            
+            Mat image = Highgui.imread(imgPath);
+            int highestValue = 0;
+            String highestColor = "";
+
+            for (int i=0; i<image.cols(); i++) {
+                for (int j=0; j<image.rows(); j++) {
+                    double[] pixel = image.get(j, i);
+                    String color = Arrays.toString(pixel);
+                    
+                    Integer cCount = colorCount.get(color);
+                    if (cCount != null) {
+                        colorCount.put(color, cCount+1);
+                        
+                        if (cCount > highestValue) {
+                            highestValue = cCount;
+                            highestColor = color;
+                        }
+                    } else {
+                        colorCount.put(color, 1);
+                    }
+                }
+            }
+            
+            int secondHighestValue = 0;
+            String secondHighestColor = "";
+            for (Map.Entry<String, Integer> entry : colorCount.entrySet()) {
+                if (entry.getValue() > secondHighestValue && entry.getValue() < highestValue) {
+                    secondHighestValue = entry.getValue();
+                    secondHighestColor = entry.getKey();
+                }
+            }
+            
+            System.out.println("MOST FREQ OCCURING COLOR: "+highestColor+" ("+highestValue+")");
+            System.out.println("SECOND MOST FREQ OCCURING COLOR: "+secondHighestColor+" ("+secondHighestValue+")");
+            
+            try {
+                String[] rgb = highestColor.substring(1, highestColor.length()-1).split(", ");
+                Color mostOccuringColor = new Color((int) Float.parseFloat(rgb[2]), (int) Float.parseFloat(rgb[1]), (int) Float.parseFloat(rgb[0]));
+                rgb = secondHighestColor.substring(1, highestColor.length()-1).split(", ");
+                Color secondMostOccuringColor = new Color((int) Float.parseFloat(rgb[2]), (int) Float.parseFloat(rgb[1]), (int) Float.parseFloat(rgb[0]));
+
+                return new ArrayList<Color>() {{ add(mostOccuringColor); add(secondMostOccuringColor);}};
+            
+            } catch (StringIndexOutOfBoundsException ex) {
+                // No color
+                return new ArrayList<Color>() {{ add(Color.BLACK); add(Color.BLACK);}};
+            }
+        }
+        
+        private static void verifyFile(String path) throws FileNotFoundException {
+            File f = new File(path);
+            if (!f.isFile()) {
+                log.log(Level.SEVERE, "{0} is not a file!", path);
+                throw new FileNotFoundException("File "+path+" not found.");
+            }
         }
 }

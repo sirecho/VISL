@@ -1,13 +1,18 @@
 package com.visl.tools;
 
 import com.visl.Element;
+import com.visl.exceptions.InvalidDimensionsException;
 import java.awt.Point;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.By;
+import org.openqa.selenium.InvalidSelectorException;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.OutputType;
@@ -28,6 +33,8 @@ public class WebSession {
     private WebDriver driver;
     private Process p;
     private FirefoxBinary firefox;
+    
+    private Logger log = Logger.getLogger(WebSession.class.getName());
     
     public WebSession(String URL) throws IOException {
         p = Runtime.getRuntime().exec(XVFB_COMMAND);
@@ -59,9 +66,17 @@ public class WebSession {
      * @return      A VISL-type element.
      * @throws NoSuchElementException if the element cannot be found.
      */
-    public Element getElement(String XPath) throws NoSuchElementException {
+    public Element getElement(String XPath) {
+        log.log(Level.INFO, "Looking for element {0}", XPath);
+        
         // Look for the element
-        WebElement element = (WebElement) driver.findElement(By.xpath(XPath));
+        WebElement element;
+        try {
+            element = (WebElement) driver.findElement(By.xpath(XPath));
+        } catch (InvalidSelectorException ex) {
+            log.log(Level.WARNING, "The selector is invalid: {0}", XPath);
+            throw new NoSuchElementException("The selector is invalid: "+XPath);
+        }
         
         /*
         * Get the position and size of the element.
@@ -73,7 +88,7 @@ public class WebSession {
         int width = (int) Math.round(Double.parseDouble(((JavascriptExecutor)driver).executeScript("return arguments[0].getBoundingClientRect()[\"width\"]", element).toString()));
         int height = (int) Math.round(Double.parseDouble(((JavascriptExecutor)driver).executeScript("return arguments[0].getBoundingClientRect()[\"height\"]", element).toString()));
         
-        System.out.println("DEBUG: Found object at "+x+","+y+" "+width+"x"+height);
+        log.log(Level.INFO, "Found element at {0},{1} {2}x{3}", new Object[]{x, y, width, height});
         
         Element el = new Element(XPath);
         el.setPositionAndSize(x, y, width, height);
@@ -81,11 +96,10 @@ public class WebSession {
         String croppedFilename = "/tmp/"+element.getTagName()+"_"+Long.toString(System.currentTimeMillis() / 1000L)+".png";
         el.setImagePath(croppedFilename);
         ImageTools.cropImage(SCREENSHOT_FILENAME, croppedFilename, x, y, width, height);
-        
         return el;
     }
     
-    public Element getElement(String XPath, int width, int height) throws NoSuchElementException {
+    public Element getElement(String XPath, int width, int height) {
         // Look for the element
         WebElement element = (WebElement) driver.findElement(By.xpath(XPath));
         
@@ -104,12 +118,18 @@ public class WebSession {
         
         String croppedFilename = "/tmp/"+element.getTagName()+"_"+Long.toString(System.currentTimeMillis() / 1000L)+".png";
         el.setImagePath(croppedFilename);
-        ImageTools.cropImage(SCREENSHOT_FILENAME, croppedFilename, x, y, width, height);
+        try {
+            ImageTools.cropImage(SCREENSHOT_FILENAME, croppedFilename, x, y, width, height);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(WebSession.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InvalidDimensionsException ex) {
+            Logger.getLogger(WebSession.class.getName()).log(Level.SEVERE, null, ex);
+        }
         
         return el;
     }
     
-    public Element getElement(int x, int y, int width, int height) throws NoSuchElementException {
+    public Element getElement(int x, int y, int width, int height) throws NoSuchElementException, FileNotFoundException, InvalidDimensionsException {
         
         String name = x+"_"+y+"_"+width+"_"+height;
         
