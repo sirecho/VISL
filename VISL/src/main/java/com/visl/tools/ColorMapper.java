@@ -1,18 +1,11 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.visl.tools;
 
 import java.awt.Color;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
- * @author echo
+ * Maps RGB values to color names.
  */
 public class ColorMapper {
     
@@ -45,6 +38,16 @@ public class ColorMapper {
         }  
     };
     
+    /**
+     * Get the name of a color based on RGB value.
+     * 
+     * Returns the name of the predefined color that is closest to the given 
+     * color. Colors are represented as points in an RGB space and compared
+     * by calculating their geometric distance from each other.
+     * 
+     * @param color
+     * @return The closest basic color for the given color.
+     */
     public static String getColorName(Color color) {
         double minDistance = Double.MAX_VALUE;
         String closestColor = "";

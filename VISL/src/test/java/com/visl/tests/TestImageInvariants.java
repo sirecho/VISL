@@ -1,26 +1,19 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package com.visl;
+package com.visl.tests;
 
+import com.visl.Constants;
+import com.visl.Element;
+import com.visl.TestPage;
+import com.visl.exceptions.InvalidDimensionsException;
 import com.visl.tools.WebSession;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
-import org.junit.Ignore;
-import com.visl.Constants;
-import com.visl.exceptions.InvalidDimensionsException;
-import java.io.FileNotFoundException;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
 import org.opencv.core.Core;
 import org.openqa.selenium.NoSuchElementException;
 
@@ -34,6 +27,7 @@ public class TestImageInvariants {
     private static String imgDir;
     private static String searocksImg;
     private static String searocksXPath;
+    private static String owlImg;
     
     private static WebSession session;
     private static Logger log;
@@ -49,6 +43,7 @@ public class TestImageInvariants {
         
         searocksImg = webDir+TestPage.SEAROCKS_PNG;
         searocksXPath = TestPage.SEAROCKS_XPATH;
+        owlImg = webDir+TestPage.OWL_PNG;
         
         log = Logger.getLogger(TestImageInvariants.class.getName());
         
@@ -80,6 +75,26 @@ public class TestImageInvariants {
         Element element = session.getElement(searocksXPath);
         assertTrue(element.hasExactImage(searocksImg));
     }
+    
+    /**
+     * Test with image that is an enlarged version of reference.
+     */
+    @Test
+    public void matching_resized() {
+        System.out.println("Testing with matching enlarged image");
+        Element element = session.getElement(searocksXPath);
+        assertTrue(element.hasResizedImage(imgDir+Constants.SEAROCKS_MEDIUM_PNG, 300, 200));
+    }
+    
+    /**
+     * Test with image that is a nonmatching enlarged version of reference.
+     */
+    @Test
+    public void nonmatching_resized() {
+        System.out.println("Testing with nonmatching enlarged image");
+        Element element = session.getElement(searocksXPath);
+        assertFalse(element.hasResizedImage(imgDir+Constants.OWL_LARGE_JPG, 300, 200));
+    }    
     
     /**
      * Test with non-matching image that is smaller than reference.
@@ -182,8 +197,6 @@ public class TestImageInvariants {
     @Test
     public void size_correct() {
         System.out.println("Testing hasImage with specific size and matching image");
-        String searocksImg = webDir+TestPage.SEAROCKS_PNG;
-        String searocksXPath = TestPage.SEAROCKS_XPATH;
         Element element = session.getElement(searocksXPath, 300, 200);
         assertTrue(element.hasExactImage(searocksImg));
     }
@@ -231,5 +244,12 @@ public class TestImageInvariants {
         System.out.println("Testing hasSubImage with matching image");
         Element element = session.getElement(TestPage.CONTENT_XPATH);
         assertTrue(element.containsImage(searocksImg));
+    }
+    
+    @Test
+    public void matching_location() {
+        System.out.println("Testing location with matching image");
+        Element element = session.getElementByLocation("Top Left");
+        assertTrue(element.containsImage(owlImg));
     }
 }

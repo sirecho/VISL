@@ -1,10 +1,7 @@
 package com.visl.tools;
 
 import com.visl.Element;
-import com.visl.exceptions.InvalidDimensionsException;
-import java.awt.Point;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -12,7 +9,6 @@ import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.By;
-import org.openqa.selenium.InvalidSelectorException;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.OutputType;
@@ -21,21 +17,27 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.remote.RemoteWebElement;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class WebSession {
-    private int      DISPLAY_NUMBER  = 99;
-    private String   XVFB            = "/usr/bin/Xvfb";
-    private String   XVFB_COMMAND    = XVFB + " :" + DISPLAY_NUMBER;
-    private String   URL             = "http://www.google.com";
-    public String   SCREENSHOT_FILENAME = "/tmp/screenshot.png";
-    private WebDriver driver;
-    private Process p;
-    private FirefoxBinary firefox;
+    public final String   SCREENSHOT_FILENAME = "/tmp/screenshot.png";
+    private final int      DISPLAY_NUMBER  = 99;
+    private final String   XVFB            = "/usr/bin/Xvfb";
+    private final String   XVFB_COMMAND    = XVFB + " :" + DISPLAY_NUMBER;
+    private final WebDriver driver;
+    private final Process p;
+    private final FirefoxBinary firefox;
     
-    private Logger log = Logger.getLogger(WebSession.class.getName());
+    private static final Logger log = Logger.getLogger(WebSession.class.getName());
     
+    /**
+     * Initiate a new session for the given URL.
+     * 
+     * Creates a new session and generates a screenshot of the web page at the
+     * given URL.
+     * 
+     * @param URL
+     * @throws IOException 
+     */
     public WebSession(String URL) throws IOException {
         p = Runtime.getRuntime().exec(XVFB_COMMAND);
         firefox = new FirefoxBinary();
@@ -96,26 +98,86 @@ public class WebSession {
         Element el = new Element(XPath);
         el.setPositionAndSize(x, y, width, height);
         
-        String croppedFilename = "/tmp/"+element.getTagName()+"_"+Long.toString(System.currentTimeMillis() / 1000L)+".png";
+        String croppedFilename = "/tmp/"+element.getTagName()+"_"+Long.toString(System.currentTimeMillis())+".png";
         el.setImagePath(croppedFilename);
         ImageTools.cropImage(SCREENSHOT_FILENAME, croppedFilename, x, y, width, height);
         File croppedFile = new File(croppedFilename);
         croppedFile.deleteOnExit();
+        log.log(Level.INFO, "Saved file {0}", croppedFilename);
         return el;        
     }
     
-    public Element getElement(int x, int y, int width, int height) throws NoSuchElementException, FileNotFoundException, InvalidDimensionsException {
+    public Element getPage() {
+        return getElement("/html");
+    }
+    
+/**
+     * Locate an element from the given location and return it as a VISL element.
+     * 
+     * @param Location
+     * (Top  Center Bottom Left Center Right)
+     * @return A VISL-type element.
+     * @throws NoSuchElementException if the element cannot be found.
+     */
+public Element getElementByLocation(String location) {
+       
+    	int screenHeight = driver.manage().window().getSize().getHeight();
+    	int screenWidth = driver.manage().window().getSize().getWidth();
+    	int x;
+    	int y;
+    	int width = screenWidth/3;
+    	int height = screenHeight/3;
+    	switch(location)
+    	{
+    	case "Top Right": 	x = 2 * screenWidth/3;
+    						y = 0;
+    						break;
+    	case "Top Center": 	x = screenWidth/3;
+    						y = 0;
+    						break;
+    	case "Top Left": 	x = 0;
+    						y=0;
+    						break;
+    	case "Center Right": 	x = 2* screenWidth/3;
+    							y = screenHeight/3;
+    							break;
+    	case "Center Center":	x = screenWidth/3;
+    							y = screenHeight/3;
+    							break;
+    	case "Center Left": 	x = 0;
+    							y = screenHeight/3;
+    							break;
+    	case "Bottom Right": 	x = 2 * screenWidth/3;
+    							y = 2 * screenHeight/3;
+    							break;
+    	case "Bottom Center":	x = screenWidth/3;
+    							y = 2 * screenHeight/3;
+    							break;
+    	case "Bottom Left": 	x = 0;
+    							y = 2 * screenHeight/3;
+    							break;
+    	default:	x = 0;
+    				y = 0;
+    	}
+    	
+    	return getElement(x, y, width, height);
+    }
+        
+    
+    public Element getElement(int x, int y, int width, int height) {
         
         String name = x+"_"+y+"_"+width+"_"+height;
         
         Element el = new Element();
         el.setPositionAndSize(x, y, width, height);
         
-        String croppedFilename = "/tmp/"+name+"_"+Long.toString(System.currentTimeMillis() / 1000L)+".png";
+        String croppedFilename = "/tmp/"+name+"_"+Long.toString(System.currentTimeMillis())+".png";
         el.setImagePath(croppedFilename);
         ImageTools.cropImage(SCREENSHOT_FILENAME, croppedFilename, x, y, width, height);
-        
-        return el;
+        File croppedFile = new File(croppedFilename);
+        croppedFile.deleteOnExit();
+        log.log(Level.INFO, "Saved file {0}", croppedFilename);
+        return el;         
     }
     
     public void close() {
