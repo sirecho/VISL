@@ -134,7 +134,80 @@ public class Element {
         }
     }
     
-    public boolean hasResizedImage(String imagePath, int width, int height) {
+    
+    /**
+     * Check if the element's image exactly matches a scaled version of the 
+     * given reference image.
+     * 
+     * The reference image is rescaled to width x height before the comparison.
+     * 
+     * The match is determined using OpenCV's template matching algorithm and
+     * by comparing the most dominant color of the images.
+     * 
+     * @param imagePath path to the reference image.
+     * @param width the expected width
+     * @param height the expected height
+     * @return True if the images are identical, false otherwise.
+     */    
+    public boolean hasExactResizedImage(String imagePath, int width, int height) {
+        return hasResizedImage(imagePath, width, height, true);
+    }
+
+    /**
+     * Check if the element's image contains a scaled version of the 
+     * given reference image.
+     * 
+     * The reference image is rescaled to width x height before the comparison.
+     * 
+     * Compares the scaled reference image to all possible sub-regions of the 
+     * element's image. The scaled image cannot be larger than the element's
+     * image.
+     * 
+     * The match is determined using OpenCV's template matching algorithm and
+     * by comparing the most dominant color of the images.
+     * 
+     * @param imagePath path to the reference image.
+     * @param width the expected width
+     * @param height the expected height
+     * @return True if the images are identical, false otherwise.
+     */    
+    public boolean containsResizedImage(String imagePath, int width, int height) {
+        return hasResizedImage(imagePath, width, height, false);
+    }
+    
+    /**
+     * Checks if the element's image matches, or is a subset of, a scaled 
+     * version of the given reference image.
+     * 
+     * If the 'exact' parameter is true, the function will perform an exact
+     * match. Otherwise, it will try to match all possible sub-regions.
+     * 
+     * @param imagePath the path to the reference image.
+     * @param width the expected width
+     * @param height the expected height      
+     * @param exact switch to decide the type of matching.
+     * @return true if the reference image matches or is a subset of the 
+     * element's image , false otherwise.
+     */    
+    private boolean hasResizedImage(String imagePath, int width, int height, boolean exact) {
+        try {
+            log.log(Level.INFO, "Comparing images");
+            return ImageTools.hasSubImageSize(this.imagePath, imagePath, width, height, exact);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Element.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+    }
+    
+    /**
+     * Image comparison by pixel comparison.
+     * 
+     * @param imagePath
+     * @param width
+     * @param height
+     * @return true if the reference image matches the element's image , false otherwise.
+     */
+    public boolean hasResizedImage2(String imagePath, int width, int height) {
         try {
             return ImageTools.compareImages(this.imagePath, imagePath, width, height) > 60.0;
         } catch (FileNotFoundException ex) {

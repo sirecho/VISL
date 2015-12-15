@@ -32,30 +32,42 @@ public class WebSession {
     /**
      * Initiate a new session for the given URL.
      * 
-     * Creates a new session and generates a screenshot of the web page at the
+     * Creates a new session and generates a screen shot of the web page at the
      * given URL.
      * 
-     * @param URL
+     * @param url The URL to the web page
      * @throws IOException 
      */
-    public WebSession(String URL) throws IOException {
+    public WebSession(String url) throws IOException {
         p = Runtime.getRuntime().exec(XVFB_COMMAND);
         firefox = new FirefoxBinary();
         firefox.setEnvironmentProperty("DISPLAY", ":" + DISPLAY_NUMBER);
         driver = new FirefoxDriver(firefox, null);
+        
+        // Set WebDriver timeout values
         driver.manage().timeouts().pageLoadTimeout(30, TimeUnit.SECONDS);
         driver.manage().timeouts().implicitlyWait(20, TimeUnit.SECONDS);
-        System.out.println("Loading webpage");
-        driver.get(URL);
-        System.out.println("Loaded webpage");
+        
+        driver.get(url);
+        log.log(Level.INFO, "Loaded webpage {0}", url);
         takeScreenshot();
     }
     
+    /**
+     * Run a JavaScript command on the webpage.
+     * 
+     * @param command the JS command
+     * @return the output of the command
+     */
     public Object runJScommand(String command) {
         JavascriptExecutor js = (JavascriptExecutor) driver;
         return js.executeScript(command);
     }
     
+    /**
+     * Take a screen shot of the web page and store it.
+     * @throws IOException 
+     */
     private void takeScreenshot() throws IOException {
         File scrFile = ( (TakesScreenshot) driver ).getScreenshotAs(OutputType.FILE);
         File outputFile = new File(SCREENSHOT_FILENAME);
@@ -66,14 +78,28 @@ public class WebSession {
     /**
      * Locate an element from the given XPath and return it as a VISL element.
      * 
-     * @param XPath
-     * @return      A VISL-type element.
+     * @param XPath the element's XPath
+     * @return A VISL-type element.
      * @throws NoSuchElementException if the element cannot be found.
      */
     public Element getElement(String XPath) {
         return getElement(XPath, 0, 0);
     }
     
+    /**
+     * Locate an element from the given XPath, width and height, and return it 
+     * as a VISL element.
+     * 
+     * Returns an element that begins at the top-left coordinate of the DOM-
+     * element corresponding to the given XPath and ends at the bottom-left
+     * coordinate defined by [x+width, y+height].
+     * 
+     * @param XPath the element's XPath
+     * @param width the width of the element
+     * @param height the height of the element
+     * @return A VISL-type element.
+     * @throws NoSuchElementException if the element cannot be found.
+     */    
     public Element getElement(String XPath, int width, int height) {
         log.log(Level.INFO, "Looking for element {0}", XPath);
         
@@ -107,19 +133,14 @@ public class WebSession {
         return el;        
     }
     
-    public Element getPage() {
-        return getElement("/html");
-    }
-    
-/**
+    /**
      * Locate an element from the given location and return it as a VISL element.
      * 
-     * @param Location
-     * (Top  Center Bottom Left Center Right)
+     * @param location The location string: "Top|Center|Bottom Left|Center|Right"
      * @return A VISL-type element.
      * @throws NoSuchElementException if the element cannot be found.
      */
-public Element getElementByLocation(String location) {
+    public Element getElementByLocation(String location) {
        
     	int screenHeight = driver.manage().window().getSize().getHeight();
     	int screenWidth = driver.manage().window().getSize().getWidth();
@@ -164,6 +185,15 @@ public Element getElementByLocation(String location) {
     }
         
     
+    /**
+     * Get a VISL element based on the given location and dimensions.
+     * 
+     * @param x top-left X-coordinate
+     * @param y top-left Y-coordinate
+     * @param width width in pixels
+     * @param height height in pixels
+     * @return The VISL element corresponding to the given region.
+     */
     public Element getElement(int x, int y, int width, int height) {
         
         String name = x+"_"+y+"_"+width+"_"+height;
@@ -180,6 +210,9 @@ public Element getElementByLocation(String location) {
         return el;         
     }
     
+    /**
+     * Close the session and destroy the thread.
+     */
     public void close() {
         driver.close();
         p.destroy();        

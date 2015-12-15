@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.visl.tools;
 
 import com.ochafik.lang.jnaerator.runtime.NativeSize;
@@ -34,7 +29,7 @@ public class TextTools {
 
     /**
      * Takes an image and extracts text from it using OCR.
-     * @param imagePath: Path of the image
+     * @param imagePath Path of the image
      * @return String The text found in the image
      */
     public static String getTextFromImage(String imagePath) {
@@ -55,7 +50,15 @@ public class TextTools {
         return result;
     }
     
-    // Algorithm from https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Java
+    /**
+     * Get the Levensthein distance between two strings.
+     *
+     * Algorithm from https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Java
+     * 
+     * @param a a string
+     * @param b a string
+     * @return the Levensthein distance between the strings.
+     */
     public static int getLevenstheinDistance(String a, String b) {
         int len0 = a.length() + 1;                                                     
         int len1 = b.length() + 1;                                                     
@@ -197,7 +200,7 @@ public class TextTools {
      * 
      * @param imagePath
      * @return A list of all the alignments that are valid for the text.
-    /********************************/
+     */
     public static Map<Alignment,Float> getAlignments(String imagePath) {
         ArrayList<ArrayList<Word>> lines = TextTools.getLines(imagePath);
         ArrayList<Word> lastLine = lines.remove(lines.size()-1);
@@ -214,6 +217,19 @@ public class TextTools {
         }
     }
     
+    /**
+     * Returns a map of how a set of sentences are aligned and the mean value
+     * if the alignment coordinates.
+     * 
+     * The text is read line by line and the left, right and center position
+     * of each line is compared. The alignment is determined by calculating
+     * the standard deviation of the left, right and center positions of each
+     * line. If the lines all start at the same left position +/- the threshold,
+     * we say that the text is left aligned.
+     * 
+     * @param lines a list of lines
+     * @return A list of all the alignments that are valid for the text.
+     */    
     public static Map<Alignment,Float> getAlignments(ArrayList<ArrayList<Word>> lines) {
         
         Map<Alignment,Float> resultMap = new HashMap<>();

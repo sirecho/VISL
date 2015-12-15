@@ -28,8 +28,8 @@ public class ImageTools {
 
 	/**
 	 * Takes two images and return a similarity score
-	 * @param pathFirst: Path of first image
-	 * @param pathTwo: : Path of second image
+	 * @param pathFirst Path of first image
+	 * @param pathTwo Path of second image
 	 * @return similarity percentage
          * @throws java.io.FileNotFoundException
 	 */
@@ -101,7 +101,22 @@ public class ImageTools {
 		System.out.println("Similarity Score: "+(100 - similarityScore));
 		return 100-similarityScore;
 	}
-                
+
+        /**
+         * Check if the template image is a subset of the source image and
+         * that the source image has the specified size.
+         * 
+         * Compares the template to all possible sub-regions of the source
+         * image and checks if the most dominant colors of both images match.
+         * 
+         * @param source the source image.
+         * @param template the template image.
+         * @param width the expected width
+         * @param height the expected height
+         * @param exact perform an exact match (no sub-region matching).
+         * @return true if template is a subset of source and colors match and
+         * the sources has the given dimensions. 
+         */        
         public static boolean hasSubImageSize(String source, String template, int width, int height, boolean exact) throws FileNotFoundException {
             verifyFile(source);
             verifyFile(template);
@@ -276,6 +291,12 @@ public class ImageTools {
             }
         }
         
+        /**
+         * Verify that a path points to a valid file.
+         * 
+         * @param path the path
+         * @throws FileNotFoundException 
+         */
         private static void verifyFile(String path) throws FileNotFoundException {
             File f = new File(path);
             if (!f.isFile()) {

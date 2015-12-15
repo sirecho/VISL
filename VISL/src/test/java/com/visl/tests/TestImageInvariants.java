@@ -77,27 +77,27 @@ public class TestImageInvariants {
     }
     
     /**
-     * Test with image that is an enlarged version of reference.
+     * Test with image that is an enlarged version of the element's image.
      */
     @Test
     public void matching_resized() {
         System.out.println("Testing with matching enlarged image");
         Element element = session.getElement(searocksXPath);
-        assertTrue(element.hasResizedImage(imgDir+Constants.SEAROCKS_MEDIUM_PNG, 300, 200));
+        assertTrue(element.hasExactResizedImage(imgDir+Constants.SEAROCKS_MEDIUM_PNG, 300, 200));
     }
     
     /**
-     * Test with image that is a nonmatching enlarged version of reference.
+     * Test with image that is a nonmatching enlarged version of the element's image.
      */
     @Test
     public void nonmatching_resized() {
         System.out.println("Testing with nonmatching enlarged image");
         Element element = session.getElement(searocksXPath);
-        assertFalse(element.hasResizedImage(imgDir+Constants.OWL_LARGE_JPG, 300, 200));
+        assertFalse(element.hasExactResizedImage(imgDir+Constants.OWL_LARGE_JPG, 300, 200));
     }    
     
     /**
-     * Test with non-matching image that is smaller than reference.
+     * Test with non-matching image that is smaller than the element's image.
      */
     @Test
     public void nonmatching_smaller() {
@@ -108,7 +108,7 @@ public class TestImageInvariants {
     }
     
     /**
-     * Test with non-matching image that is larger than reference. 
+     * Test with non-matching image that is larger than the element's image. 
      */
     @Test
     public void nonmatching_larger() {
@@ -239,12 +239,25 @@ public class TestImageInvariants {
         session.getElement(searocksXPath, -3, -2);    
     }
     
+    /**
+     * Test with image that is a subset of the element's image
+     */
     @Test
     public void subImage_matching() {
         System.out.println("Testing hasSubImage with matching image");
         Element element = session.getElement(TestPage.CONTENT_XPATH);
         assertTrue(element.containsImage(searocksImg));
     }
+    
+    /**
+     * Test with image that is an enlarged version of the element's image.
+     */
+    @Test
+    public void subImage_matching_resized() {
+        System.out.println("Testing with matching enlarged image");
+        Element element = session.getElement(TestPage.CONTENT_XPATH);
+        assertTrue(element.containsResizedImage(imgDir+Constants.SEAROCKS_MEDIUM_PNG, 300, 200));
+    }    
     
     @Test
     public void matching_location() {
