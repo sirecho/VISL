@@ -1,4 +1,6 @@
-# VISL - A project that provide a simple framework for visual invariant testing of web pages.
+# VISL
+
+VISL is a project that provides a simple Java framework for visual invariant testing of web pages.
 
 To run VISL you must have Firefox and Xvfb (X virtual framebuffer) installed on your system.
 
